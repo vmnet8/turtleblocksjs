@@ -9,29 +9,21 @@ services:
 script:
 - export DOCKER_CLI_EXPERIMENTAL=enabled
 - source sha_function.sh
-- flag_turtleblocksjs=$(is_base "vmnet8/turtleblocksjs:latest" "vmnet8/nginx:latest") #compare turtleblocksjs has newest alpine image
+- flag_turtleblocksjs=$(is_base "vmnet8/turtleblocksjs:latest" "vmnet8/nginx:latest")
 - echo $flag_turtleblocksjs
-#- version1=$(image_version nginx:latest)
-#- echo "offical nginx version is $version1"
-#- version2=$(image_version vmnet8/nginx:latest)
-#- echo "vmnet8/nginx version is $version2"
 - echo "$DOCKERPASS" | docker login -u vmnet8 --password-stdin
-- docker run --rm --privileged multiarch/qemu-user-static --reset -p yes   # for arm64 to work
-#- docker run --rm --privileged multiarch/qemu-user-static:register --reset, important, with it multarch works!
-# build arm amd64 arm64 3 kinds of nginx image using newest alpine image
-- "./docker-build.sh vmnet8/nginx:latest arm"    #Dockerfile base image is arm arch
-- "./docker-build.sh vmnet8/nginx:latest arm64"    #Dockerfile base image is arm64 arch
-- "./docker-build.sh vmnet8/nginx:latest amd64"    #Dockerfile base image is amd64 arch
-# will compare new vmnet8/ngins-tags:$arch image's nginx version with vmnet8/nginx nginx version
-#- flag=$(compare "vmnet8/alpine:latest" "vmnet8/nginx:latest" "vmnet8/nginx:latest" "vmnet8/nginx-tags:amd64")
-#- echo $flag
+- docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+- "./docker-build.sh vmnet8/nginx:latest arm"
+- "./docker-build.sh vmnet8/nginx:latest arm64"
+- "./docker-build.sh vmnet8/nginx:latest amd64"
 before_deploy:
 - timetag=$(date +%Y%m%d%H%M)
 - echo $timetag
 - tag1="latest"
 - tag2=$timetag
 - echo "timetag is $tag2"
-- create_manifest vmnet8/turtleblocksjs $tag1 $tag2 vmnet8/turtleblocksjs-tags:amd64 vmnet8/turtleblocksjs-tags:arm vmnet8/turtleblocksjs-tags:arm64
+- create_manifest vmnet8/turtleblocksjs $tag1 $tag2 vmnet8/turtleblocksjs-tags:amd64
+  vmnet8/turtleblocksjs-tags:arm vmnet8/turtleblocksjs-tags:arm64
 - docker manifest inspect vmnet8/turtleblocksjs:$tag1
 - docker manifest inspect vmnet8/turtleblocksjs:$tag2
 deploy:
@@ -40,7 +32,7 @@ deploy:
   skip_cleanup: true
   on:
     all_branches: true
-    condition: $flag = true
+    condition: "$flag = true"
 env:
   global:
-    secure: dkfp69KWQ+HTWau1m3+0ArxpK+luZ/r29JxaO8vPCgI1S6Axd8R77HfDhCRh9skb1X3GmRJK0fENKRI/pqQ9Kd97qvFxki7H2ECNWbOSqXc8EaNEObzOsEvtlTbqrTCbI+U5j3VG3fi2t2p31iFghpykOqQHzDyS3PsmgpvYTbZKHxf+fbkbKpUw7jjVr9N99Uls60VRdmUiUU9KPmw9ppcJEsIw1bCP4vtBaBjkyFFcZvR4yXp/xs+3wDdRYGuGJ3LR6BHh5K/tLwBAKvPU5MHz/Sppg4y2kuc/70CwWd/VxdLQvPMhKmA5040pVWV6jcX1JkDzUvN4hWPNJm0n1w8KBJoYAvHjZ53wzHZK8dUlYUsc9IPrQywWYdaDH3Kop7oxlU1UhZXhG3PSQ+kdI/XUiZmCa5BTDKow6LuaEJ85QUKSECSuapXlNYswMX0OV1iefsm24wbkHZEmxPtFIsq/vgylNMygqyVCvRIW8vbiXCvZYENeWYFQZJfWRiMx1DlLw6+NeJYJdXYjFRHgoSPG79GrGdjxxAuhQe7Bu+luuZeayxle3ddwszs1bkEvPsQZBcsqsEk8bZXi3hV4vfktG1aN+yAo7GX24XOeQM/61HRR3JRv/jloAx98WSwE5vpV2BO/yG9BPVwZg0ei+TdzjrYdV8VYHMFC1Pbf+7g=
+  - secure: cFImrYDPyPl2aa1OV3td2qZTPyUxMrS9fnurW6gzcNgxpbgHBG9XK6yY7B/zJnUMjLWfFD5AEMumc7xO76gKE8vyQWGxS8+cW6Hf6XQ8cRSsz/gyYoY1WMbL4K2Y/h3tBFPGDgXdTIBznGlollRl6UaYo9wLHO93i6xE+k1YkPD40d8FsSTunc/WT+tSnIs9uMsc3yYGIVj4qivBWGYoJfzGgoRiz1tPN52NhW3GdWk0H+BsxMkYfAbBZQBaJ4myCC9BRGEynKpYVC2xo2TSGNCYU1rLCbyzRk7QMRxzVCwiwxepZZBmj9UlWr2CW+SELhXyz9Z+s1e7Odxvb8YX4a6C6tpPNVhsukFRatFbdVw+VIsPh27RqPBfBSopMwBGTzS1/JALaTJWA3fkbJ4js9Fr4nSw3QwlaHq5xoUsNojxJCS240QCnCwYxPOYxOG4UtSDl2ClUubx2s5N7axZ7ImVpH4La+Z3DRd/4toUiLC8Cpm0w5rEgdbQ0weyC499EoukhndyShwM7eVUxR4qzicDrbkx4oFPiDddBdIVnKVDQ9WZlVEsFUeLVYuSs+W1qRkX1/vV4DJ23Mnm75zOGYEjJKCdHZKbpv4TgvG+3/LfimPTu+FKRdiFdS4Z0p9Pz46Foqfnnlie05gv3A82QAPuyt4PkWCrbYJyLERWZQ0=
